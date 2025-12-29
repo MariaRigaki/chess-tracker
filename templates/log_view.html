@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Log</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        .card { background-color: #1e293b; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #334155; }
+        .btn-action { background-color: #3b82f6; transition: all 0.2s; }
+        .btn-action:hover { background-color: #2563eb; transform: translateY(-2px); }
+    </style>
+</head>
+<body class="p-8 bg-slate-950 text-slate-200">
+    <div class="max-w-6xl mx-auto">
+        <h2 class="text-2xl font-bold mb-6">Activity Log</h2>
+
+        <div class="card p-6 bg-slate-900 rounded-xl shadow-xl mb-6">
+            <h3 class="text-xl mb-4">Log New Activity</h3>
+            <form hx-post="/log-activity/" hx-target="#activity-list" hx-swap="afterbegin" hx-on::after-request="this.reset()" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="flex flex-col">
+                    <label class="text-xs text-slate-400 mb-1">Activity</label>
+                    <select name="name" class="bg-slate-800 border border-slate-700 p-2 rounded text-white outline-none focus:border-blue-500">
+                        <option value="Books/Other">📚 Books/Other</option>
+                        <option value="Endgame">♟️ Endgame</option>
+                        <option value="Games">💻 Games & Analysis</option>
+                        <option value="Lesson">📖 Lesson</option>
+                        <option value="Middlegame / Strategy">🧘 Middlegame / Strategy</option>
+                        <option value="Opening prep.">🚶 Opening prep</option>
+                        <option value="Tactics/Calculation">🧹 Tactics/Calculation</option>
+                        <option value="Trainer">🏋️ Trainer</option>
+                        <option value="Visualization">📊 Visualization</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-xs text-slate-400 mb-1">Date</label>
+                    <input type="date" name="activity_date" value="{{ today }}" class="bg-slate-800 border border-slate-700 p-2 rounded text-white outline-none focus:border-blue-500">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-xs text-slate-400 mb-1">Minutes</label>
+                    <input type="number" name="minutes" value="30" class="bg-slate-800 border border-slate-700 p-2 rounded text-white outline-none focus:border-blue-500">
+                </div>
+
+                <div class="flex flex-col md:col-span-1">
+                    <label class="text-xs text-slate-400 mb-1">Comment/Notes</label>
+                    <input type="text" name="comment" placeholder="How did it go?" class="bg-slate-800 border border-slate-700 p-2 rounded text-white outline-none focus:border-blue-500">
+                </div>
+
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition shadow-lg">
+                        Save Entry
+                    </button>
+                </div>
+            </form>
+            <div id="status" class="mt-2 text-green-400"></div>
+        </div>
+
+        <div id="activity-list" class="space-y-6">
+            {% for week, activities in weekly_data %}
+            <div class="card">
+                <h3 class="text-lg font-semibold mb-4 text-blue-400">{{ week }}</h3>
+                <ul class="space-y-2">
+                    {% for activity in activities %}
+                    <li class="flex justify-between items-center text-slate-300 bg-slate-800/50 p-3 rounded">
+                        <div class="flex-1">
+                            <span class="font-bold">{{ activity.name }}</span> - {{ activity.minutes }} min
+                            {% if activity.comment %}
+                            <p class="text-sm text-slate-400">{{ activity.comment }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500">{{ activity.activity_date.strftime('%m-%d') }} at {{ activity.created_at.strftime('%H:%M') }}</span>
+                            <button 
+                                hx-delete="/delete-activity/{{ activity.id }}" 
+                                hx-target="closest li" 
+                                hx-swap="outerHTML"
+                                class="text-red-400 hover:text-red-300 text-sm px-2 py-1 rounded hover:bg-red-900/20 transition">
+                                🗑️
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

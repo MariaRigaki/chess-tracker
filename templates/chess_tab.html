@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Tracker</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        .card { background-color: #1e293b; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #334155; }
+        .btn-action { background-color: #3b82f6; transition: all 0.2s; }
+        .btn-action:hover { background-color: #2563eb; transform: translateY(-2px); }
+    </style>
+</head>
+<body class="p-8 bg-slate-950 text-slate-200">
+    <div class="max-w-6xl mx-auto">
+        <h2 class="text-2xl font-bold mb-6">Chess Tracker</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card">
+                <h2 class="text-lg font-semibold mb-4 text-orange-400">Chess Automation</h2>
+                <input type="text" id="lichess_user" placeholder="Lichess Username" class="w-full p-2 mb-3 bg-slate-900 border border-slate-700 rounded text-white">
+                <button 
+                    hx-post="/sync-chess/" 
+                    hx-vals='js:{username: document.getElementById("lichess_user").value}'
+                    hx-target="#sync-status"
+                    class="w-full bg-orange-600 hover:bg-orange-700 p-2 rounded font-bold transition">
+                    🔄 Sync Latest Games
+                </button>
+                <div id="sync-status" class="mt-2 text-sm text-slate-400">Ready</div>
+            </div>
+
+            <div class="card">
+                <h2 class="text-lg font-semibold mb-4 text-green-400">Manual Game Entry</h2>
+                <form hx-post="/add-manual-game/" hx-target="#games-table tbody" hx-swap="afterbegin">
+                    <select name="source" class="w-full p-2 mb-3 bg-slate-900 border border-slate-700 rounded text-white">
+                        <option value="Lichess">Lichess</option>
+                        <option value="OTB">OTB (Over The Board)</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <select name="result" class="w-full p-2 mb-3 bg-slate-900 border border-slate-700 rounded text-white">
+                        <option value="win">Win</option>
+                        <option value="loss">Loss</option>
+                        <option value="draw">Draw</option>
+                    </select>
+                    <input type="number" name="my_rating" placeholder="My Rating" class="w-full p-2 mb-3 bg-slate-900 border border-slate-700 rounded text-white" required>
+                    <input type="number" name="opponent_rating" placeholder="Opponent Rating" class="w-full p-2 mb-3 bg-slate-900 border border-slate-700 rounded text-white" required>
+                    <input type="datetime-local" name="played_at" class="w-full p-2 mb-3 bg-slate-900 border border-slate-700 rounded text-white" required>
+                    <select name="error_category" class="w-full p-2 mb-3 bg-slate-900 border border-slate-700 rounded text-white">
+                        <option value="">No Error Category</option>
+                        <option value="Tactical Blunder">Tactical Blunder</option>
+                        <option value="Positional Error">Positional Error</option>
+                        <option value="Opening Theory">Opening Theory</option>
+                        <option value="Time Management">Time Management</option>
+                        <option value="Calculation Error">Calculation Error</option>
+                        <option value="Endgame Technique">Endgame Technique</option>
+                        <option value="No Error">No Error</option>
+                    </select>
+                    <input type="text" name="comment" placeholder="Comment (optional)" class="w-full p-2 mb-3 bg-slate-900 border border-slate-700 rounded text-white">
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 p-2 rounded font-bold transition">
+                        ➕ Add Game
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4 border-b border-slate-700 pb-2">Recent Chess Games</h2>
+                <div class="overflow-y-auto max-h-96">
+                    <table id="games-table" class="w-full text-left">
+                        <thead>
+                            <tr class="text-slate-400 text-sm">
+                                <th class="pb-2">Source</th>
+                                <th class="pb-2">Date</th>
+                                <th class="pb-2">Result</th>
+                                <th class="pb-2">My Elo</th>
+                                <th class="pb-2">Opponent</th>
+                                <th class="pb-2">Error Category</th>
+                                <th class="pb-2">Comment</th>
+                                <th class="pb-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for game in chess_games %}
+                            <tr class="border-t border-slate-800">
+                                <td class="py-3 text-sm text-blue-400">{{ game.source }}</td>
+                                <td class="py-3 text-sm">{{ game.played_at.strftime('%m-%d %H:%M') }}</td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 rounded text-xs font-bold {{ 'bg-green-900 text-green-300' if game.result == 'win' else 'bg-red-900 text-red-300' if game.result == 'loss' else 'bg-slate-700 text-slate-300' }}">
+                                        {{ game.result.upper() }}
+                                    </span>
+                                </td>
+                                <td class="py-3 font-mono">{{ game.my_rating }}</td>
+                                <td class="py-3 text-slate-400">{{ game.opponent_rating }}</td>
+                                <td class="py-3">
+                                    <form hx-post="/update-chess/{{ game.id }}" hx-target="closest tr" class="inline">
+                                        <select name="error_category" class="bg-slate-800 border border-slate-700 p-1 rounded text-white text-xs">
+                                            <option value="" {% if not game.error_category %}selected{% endif %}></option>
+                                            <option value="Tactical Blunder" {% if game.error_category == 'Tactical Blunder' %}selected{% endif %}>Tactical Blunder</option>
+                                            <option value="Positional Error" {% if game.error_category == 'Positional Error' %}selected{% endif %}>Positional Error</option>
+                                            <option value="Opening Theory" {% if game.error_category == 'Opening Theory' %}selected{% endif %}>Opening Theory</option>
+                                            <option value="Time Management" {% if game.error_category == 'Time Management' %}selected{% endif %}>Time Management</option>
+                                            <option value="Calculation Error" {% if game.error_category == 'Calculation Error' %}selected{% endif %}>Calculation Error</option>
+                                            <option value="Endgame Technique" {% if game.error_category == 'Endgame Technique' %}selected{% endif %}>Endgame Technique</option>
+                                            <option value="No Error" {% if game.error_category == 'No Error' %}selected{% endif %}>No Error</option>
+                                        </select>
+                                </td>
+                                <td class="py-3">
+                                        <input type="text" name="comment" value="{{ game.comment or '' }}" class="bg-slate-800 border border-slate-700 p-1 rounded text-white text-xs w-full">
+                                </td>
+                                <td class="py-3 flex gap-1">
+                                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded">
+                                            Save
+                                        </button>
+                                        <button 
+                                            hx-delete="/delete-chess/{{ game.id }}" 
+                                            hx-target="closest tr" 
+                                            hx-swap="outerHTML"
+                                            class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

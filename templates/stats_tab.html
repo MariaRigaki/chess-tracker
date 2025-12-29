@@ -1,0 +1,31 @@
+<div class="max-w-6xl mx-auto">
+    <h2 class="text-2xl font-bold mb-6">Activity Stats</h2>
+
+    <div class="flex gap-4 mb-6">
+        <button hx-get="/stats" hx-target="#activity-list" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded">All</button>
+        <button hx-get="/stats?filter=current_week" hx-target="#activity-list" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded">Current Week</button>
+        <button hx-get="/stats?filter=last_week" hx-target="#activity-list" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded">Last Week</button>
+        <button hx-get="/stats?filter=current_month" hx-target="#activity-list" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded">Current Month</button>
+    </div>
+
+    <div id="activity-list" class="space-y-6">
+        {% for week, activities in weekly_data %}
+        <div class="card">
+            <h3 class="text-lg font-semibold mb-4 text-blue-400">{{ week }}</h3>
+            <ul class="space-y-2">
+                {% for activity in activities %}
+                <li class="flex justify-between items-center text-slate-300 bg-slate-800/50 p-3 rounded">
+                    <div>
+                        <span class="font-bold">{{ activity.name }}</span> - {{ activity.minutes }} min
+                        {% if activity.comment %}
+                        <p class="text-sm text-slate-400">{{ activity.comment }}</p>
+                        {% endif %}
+                    </div>
+                    <span class="text-xs text-slate-500">{{ activity.activity_date.strftime('%m-%d') }} at {{ activity.created_at.strftime('%H:%M') }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</div>

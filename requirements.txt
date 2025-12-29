@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+jinja2
+python-multipart
+requests
+python-chess
+plotly
