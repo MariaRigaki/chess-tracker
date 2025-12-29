@@ -73,7 +73,7 @@
                             {% endif %}
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-slate-500">{{ activity.activity_date.strftime('%m-%d') }} at {{ activity.created_at.strftime('%H:%M') }}</span>
+                            <span class="text-xs py-3">{{ activity.activity_date.strftime('%d.%m') }} at {{ activity.created_at.strftime('%H:%M') }}</span>
                             <button 
                                 hx-delete="/delete-activity/{{ activity.id }}" 
                                 hx-target="closest li" 

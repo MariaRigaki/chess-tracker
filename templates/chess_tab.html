@@ -86,7 +86,7 @@
                             {% for game in chess_games %}
                             <tr class="border-t border-slate-800">
                                 <td class="py-3 text-sm text-blue-400">{{ game.source }}</td>
-                                <td class="py-3 text-sm">{{ game.played_at.strftime('%m-%d %H:%M') }}</td>
+                                <td class="py-3 text-sm">{{ game.played_at.strftime('%d.%m %H:%M') }}</td>
                                 <td class="py-3">
                                     <span class="px-2 py-1 rounded text-xs font-bold {{ 'bg-green-900 text-green-300' if game.result == 'win' else 'bg-red-900 text-red-300' if game.result == 'loss' else 'bg-slate-700 text-slate-300' }}">
                                         {{ game.result.upper() }}
