@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pandas
+python-multipart
+pydantic
+pydantic-settings
+python-dateutil
